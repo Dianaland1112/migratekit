@@ -89,8 +89,13 @@ func TestNewClientSetEndpointInterface(t *testing.T) {
 
 			clients, err := NewClientSet(context.Background())
 			if tt.wantError {
-				if err == nil || !strings.Contains(err.Error(), "OS_INTERFACE") {
-					t.Fatalf("expected an OS_INTERFACE error, got %v", err)
+				if err == nil {
+					t.Fatal("expected an OS_INTERFACE error")
+				}
+				for _, part := range []string{"OS_INTERFACE", "private", "public", "internal", "admin"} {
+					if !strings.Contains(err.Error(), part) {
+						t.Errorf("interface error %q does not mention %q", err, part)
+					}
 				}
 				if requests.Load() != 0 {
 					t.Fatal("invalid interface contacted Keystone before returning an error")
