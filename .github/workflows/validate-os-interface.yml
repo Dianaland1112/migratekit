@@ -1,0 +1,39 @@
+name: Validate endpoint interface
+
+on:
+  push:
+    branches: [ci/os-interface-validation]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: fedora:44
+    timeout-minutes: 20
+    steps:
+      - name: Install build dependencies
+        run: dnf install -y git golang libnbd-devel
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify unchanged upstream baseline
+        run: |
+          mkdir -p /tmp/migratekit-baseline
+          git archive 140824860ef0a0406309791f44880f35a701e162 | tar -x -C /tmp/migratekit-baseline
+          cd /tmp/migratekit-baseline
+          go test ./...
+      - name: Run endpoint regression tests
+        run: go test ./internal/openstack -run TestNewClientSetEndpointInterface -v
+      - name: Check changed Go files are formatted
+        run: test -z "$(gofmt -l internal/openstack/client.go internal/openstack/client_test.go)"
+      - name: Test all packages
+        run: go test ./...
+      - name: Race-check OpenStack tests
+        run: go test -race ./internal/openstack
+      - name: Vet all packages
+        run: go vet ./...
+      - name: Build all packages
+        run: go build ./...
