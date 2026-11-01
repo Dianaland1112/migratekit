@@ -21,8 +21,9 @@ jobs:
           persist-credentials: false
       - name: Verify unchanged upstream baseline
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           mkdir -p /tmp/migratekit-baseline
-          git -c safe.directory="$GITHUB_WORKSPACE" archive 140824860ef0a0406309791f44880f35a701e162 | tar -x -C /tmp/migratekit-baseline
+          git archive 140824860ef0a0406309791f44880f35a701e162 | tar -x -C /tmp/migratekit-baseline
           cd /tmp/migratekit-baseline
           go test ./...
       - name: Run endpoint regression tests
